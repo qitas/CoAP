@@ -388,7 +388,7 @@ int RTC_Init(void)
 	RCC_LSICmd(ENABLE);
 	if (GET_RTCINIT_FLAG != 1)		//´ÓÖ¸¶¨µÄºó±¸¼Ä´æÆ÷ÖÐ¶Á³öÊý¾Ý:¶Á³öÁËÓëÐ´ÈëµÄÖ¸¶¨Êý¾Ý²»Ïàºõ
 	{
-		printf("RTC  ÖØÐÂ³õÊ¼»¯ %d  \r\n",GET_RTCINIT_FLAG);
+		printf("RTC ÖØÐÂ³õÊ¼»¯ %d  \r\n",GET_RTCINIT_FLAG);
 		BKP_DeInit();	//¸´Î»±¸·ÝÇøÓò 	
 		//RCC_LSEConfig(RCC_LSE_OFF);	//ÉèÖÃÍâ²¿µÍËÙ¾§Õñ(LSE),Ê¹ÓÃÍâÉèµÍËÙ¾§Õñ
 		RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
@@ -412,7 +412,7 @@ int RTC_Init(void)
 		RTC_ITConfig(RTC_IT_ALR, ENABLE);	//Ê¹ÄÜRTCÃëÖÐ¶Ï
 		RTC_NVIC_Config();//RCTÖÐ¶Ï·Ö×éÉèÖÃ	
 		
-		RTC_ExitConfigMode(); //ÍË³öÅäÖÃÄ£Ê
+		RTC_ExitConfigMode(); //ÍË³öÅäÖÃÄ£
 		SET_RTCINIT_FLAG;  
 		//BKP_WriteBackupRegister(BKP_DR1, 0X5050);	//ÏòÖ¸¶¨µÄºó±¸¼Ä´æÆ÷ÖÐÐ´ÈëÓÃ»§³ÌÐòÊý¾Ý
 	}
@@ -421,8 +421,7 @@ int RTC_Init(void)
 
 		RTC_WaitForSynchro();	//µÈ´ý×î½üÒ»´Î¶ÔRTC¼Ä´æÆ÷µÄÐ´²Ù×÷Íê³É
 		RTC_WaitForLastTask();	//µÈ´ý×î½üÒ»´Î¶ÔRTC¼Ä´æÆ÷µÄÐ´²Ù×÷Íê³É
-	}
-		    				     	
+	}		    				     	
 	return 0; //ok
 
 }		 				    

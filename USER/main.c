@@ -10,9 +10,9 @@
 
 
 
-static char MYMICCID[42] =  "99900000000000000000";
-static char MYDEVICEID[32] = "866971030432384";
-static char RSSI[] = "00000000000000000000000000000000";
+static char MYMICCID[42] = "99900000000000000000";
+static char IMEI[] = "866971030432384";// "866971030432384";
+static char RSSI[] = "000000000000000000000000000";
 
 static int make_json_data(char *oustr)
 {
@@ -26,11 +26,11 @@ static int make_json_data(char *oustr)
 	uint32_t RTC_buff = RTC_GetCounter();	
 	cJSON_AddNumberToObject(pJsonRoot, "VERSION", 1);
 	cJSON_AddNumberToObject(pJsonRoot, "TIME SEED ", RTC_buff);
-	cJSON_AddStringToObject(pJsonRoot, "DEVID",MYDEVICEID);
+	cJSON_AddStringToObject(pJsonRoot, "DEVID",IMEI);
 	cJSON_AddStringToObject(pJsonRoot, "MICCID", MYMICCID);
-	cJSON_AddStringToObject(pJsonRoot, "CSQ ", RSSI);
+	cJSON_AddStringToObject(pJsonRoot, "RSSI", RSSI);
 	cJSON_AddStringToObject(pJsonRoot, "INFO","2600KPa");
-	cJSON_AddStringToObject(pJsonRoot, "NET", "China Mobile");
+	cJSON_AddStringToObject(pJsonRoot, "NET", "China Telecom");
 	cJSON_AddStringToObject(pJsonRoot, "STATUS", "live");
 	cJSON_AddStringToObject(pJsonRoot, "Auth ","Qitas");
 	cJSON_AddStringToObject(pJsonRoot, "TIME","2018.11.14");	
@@ -125,16 +125,13 @@ int main(void)
 	
 	LED_NETWORK_REGISTER_STATUS;
 	
-	modem_poweron();
-	
+	modem_poweron();	
 	vdd_5v_out(1);
 	vdd_3v3_out(1);
 	
 	utimer_sleep(2000);
-	while(neul_bc26_get_netstat()<0){utimer_sleep(400);};	//等待连接上网络
-	
+	while(neul_bc26_get_netstat()<0){utimer_sleep(200);};	//等待连接上网络
 	{
-		
 		/*
 		 * 分配内存
 		 */
@@ -144,6 +141,8 @@ int main(void)
 		char *jsonbuf = malloc(512);
 		
 		int ret=0,PTR=0;
+		
+		RTC_SetAlarm(RTC_GetCounter() +  120);
 		
 		/*
 		 * 发送ATI指令
@@ -177,14 +176,17 @@ int main(void)
 		uart_data_write("AT+CGPADDR=1\r\n", strlen("AT+CGPADDR=1\r\n"), 0);
 		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
 		/*
-		 * 获取设备ID IMEI
+		 * 获取设备IMEI
 		 */
 		
 		memset(recvbuf,0x0,RECV_BUF_LEN);
 		uart_data_write("AT+CGSN=1\r\n", strlen("AT+CGSN=1\r\n"), 0);
-		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
-		
-
+		ret = uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
+		if(strstr(recvbuf,"OK"))
+		{
+			memcpy(IMEI,uart2_rx_buffer+9,strlen(IMEI));	
+			printf("IMEI : %s\r\n",IMEI);
+		}		
 
 		memset(recvbuf,0x0,RECV_BUF_LEN);
 		uart_data_write("AT*MICCID\r\n", strlen("AT*MICCID\r\n"), 0);
@@ -206,7 +208,7 @@ int main(void)
 		/*
 		 * 获取信号值
 		 */
-		memset(RSSI,0x0,32);
+		//memset(RSSI,0x0,32);
 		memset(recvbuf,0x0,RECV_BUF_LEN);
 		uart_data_write("AT+CSQ\r\n", strlen("AT+CSQ\r\n"), 0);
 		ret = uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
@@ -233,7 +235,7 @@ int main(void)
 //			PTR+=ret-25;	
 			memcpy(RSSI+PTR,uart2_rx_buffer+9,ret-17);		
 			PTR+=ret-17;
-			memset(RSSI+PTR,'.',32-PTR);							
+			memset(RSSI+PTR,'.',27-PTR);					
 		}
 		char *p;
 		while((p = strchr(RSSI,','))!=NULL)
@@ -258,7 +260,7 @@ int main(void)
 		{
 			char *tmpstr;
 			tmpstr = (char*)malloc(128);
-			snprintf(tmpstr,128,"AT+QLWCONF=\"%s\"\r\n",MYDEVICEID);
+			snprintf(tmpstr,128,"AT+QLWCONF=\"%s\"\r\n",IMEI);
 			memset(recvbuf,0x0,RECV_BUF_LEN);
 			uart_data_write(tmpstr,strlen(tmpstr),0);
 			uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
@@ -338,7 +340,7 @@ int main(void)
 //			free(tmp);
 //		}
 		
-		printf("连接建立完毕，waiting 4 second...\r\n");
+		printf("连接建立完毕，waiting 3 second...\r\n");
 		utimer_sleep(3000);
 						
 		/*
@@ -347,18 +349,17 @@ int main(void)
 		free(recvbuf);
 		free(atbuf);
 		free(jsonbuf);
-	}
-	
+	}	
 	printf("Sys_Enter_Standby CurrentTim %d\r\n",RTC_GetCounter());
 	
 	/*
 	 * 设置2MIN之后再次启动并进入PSM模式
 	 */
 	
-	RTC_SetAlarm(RTC_GetCounter() +  120);
-	modem_poweroff();
-	vdd_5v_out(0);
-	vdd_3v3_out(0);
+	
+//	modem_poweroff();
+//	vdd_5v_out(0);
+//	vdd_3v3_out(0);
 	//进入休眠
 	utimer_sleep(20);
 	Sys_Enter_Standby();
