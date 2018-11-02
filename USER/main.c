@@ -166,9 +166,9 @@ int main(void)
 		/*
 		 * 关闭回显
 		 */
-//		memset(recvbuf,0x0,RECV_BUF_LEN);
-//		uart_data_write("ATE1\r\n", strlen("ATE0\r\n"), 0);
-//		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
+		memset(recvbuf,0x0,RECV_BUF_LEN);
+		uart_data_write("ATE0\r\n", strlen("ATE0\r\n"), 0);
+		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
 
 
 
@@ -212,12 +212,13 @@ int main(void)
 		ret = uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
 		
 		if(strstr(recvbuf,"OK"))
-		{	
-			memcpy(RSSI,uart2_rx_buffer+15,ret-23);	
-			PTR=ret-23;
+		{
+//			memcpy(RSSI,uart2_rx_buffer+15,ret-23);	
+//			PTR=ret-23;
+			memcpy(RSSI,uart2_rx_buffer+8,ret-16);	
+			PTR=ret-16;
 			RSSI[PTR++] =' ';
 			//printf("CSQ RSSI: %s\r\n",RSSI);
-
 		}
 		/*
 		 * 获取信号值
@@ -228,8 +229,10 @@ int main(void)
 		
 		if(strstr(recvbuf,"OK"))
 		{	
-			memcpy(RSSI+PTR,uart2_rx_buffer+17,ret-25);		
-			PTR+=ret-25;	
+//			memcpy(RSSI+PTR,uart2_rx_buffer+17,ret-25);		
+//			PTR+=ret-25;	
+			memcpy(RSSI+PTR,uart2_rx_buffer+9,ret-17);		
+			PTR+=ret-17;
 			memset(RSSI+PTR,'.',32-PTR);							
 		}
 		char *p;
@@ -237,7 +240,7 @@ int main(void)
 		{
 			*p=':';
 		}
-		printf("CESQ RSSI: %s\r\n",RSSI);
+		printf("RSSI: %s\r\n",RSSI);
 		
 		/*
 		 * 链接电信云服务器
